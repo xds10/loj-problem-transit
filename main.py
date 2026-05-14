@@ -81,11 +81,10 @@ def write_pid_mapping(pid: str, problem_id: str) -> bool:
 
 
 # API配置（根据curl信息调整）
-API_CREATE_PROBLEM = "http://oj.hitwh.edu.cn/api/problem"  # 创建题目API（推测）
-API_UPDATE_PROBLEM = "http://oj.hitwh.edu.cn/api/problem/{pid}"  # 更新题目详情（推测）
-API_UPLOAD_FILE = "http://oj.hitwh.edu.cn/api/problem/file/{problem_id}"
-API_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cm8iOiJBRE1JTiIsInVubyI6IjEiLCJyYW4iOiI3NjdjOGFmMC01ZjQ0LTQwM2MtYWE4Yi1lNDIzZGM1NWI3M2IiLCJleHAiOjE3NjU1NDM4ODB9._p5jTKrjNd_Nj_fb2WVZj42CgZga3GnO1yXgUoox_v0"
-
+API_CREATE_PROBLEM = "http://localhost:5070/api/problem"  # 创建题目API（推测）
+API_UPDATE_PROBLEM = "http://localhost:5070/api/problem/{pid}"  # 更新题目详情（推测）
+API_UPLOAD_FILE = "http://localhost:5070/api/problem/file/{problem_id}"
+API_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cm8iOiJBRE1JTiIsInVubyI6IjEiLCJyYW4iOiJkMGE4NDgyZS1iZjJmLTQyODktYTQ1Yy1jY2FiZjk2NDY0MDEiLCJleHAiOjE3NzM2NzA3OTN9.CpTNP42sx9fMs4kMYGsdnji6b3B53AH3_oA3nIzJK3w"
 
 
 
@@ -97,7 +96,7 @@ HEADERS = {
     "Cache-Control": "no-cache",
     "Connection": "keep-alive",
     "Pragma": "no-cache",
-    "Referer": "http://oj.hitwh.edu.cn/problem/1",  # 保持与curl一致的Referer
+    "Referer": "http://localhost:5070/problem/1",  # 保持与curl一致的Referer
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
 }
 
@@ -302,10 +301,6 @@ def upload_problem(folder_path: str) -> bool:
             "description": md_content,  # 推测描述字段对应markdown内容
             # 可根据实际API响应的字段补充其他参数
         }
-        for item in yaml_config.get("tag", []):
-            if item == "文件 IO" or item == "Special Judge" or item == "提交答案" or item == "交互题":
-                logger.debug(f"处理题目文件夹 {folder_path}  tag: {item} continue!!!")
-                return
 
         api_url = API_CREATE_PROBLEM
         result = call_api(api_url, "POST", problem_data)
@@ -319,7 +314,7 @@ def upload_problem(folder_path: str) -> bool:
         logger.info(f"{action}题目 {pid} 成功,new id:{problem_id}")
         write_pid_mapping(pid,problem_id)
 
-        api_url_file = f"http://oj.hitwh.edu.cn/api/problem/file/{problem_id}"
+        api_url_file = f"http://localhost:5070/api/problem/file/{problem_id}"
         testdata_path = os.path.join(folder_path, "testdata")
         additional_path = os.path.join(folder_path, "additional_file")
 
@@ -345,7 +340,7 @@ def upload_problem(folder_path: str) -> bool:
 
         action = "上传subtask"
 
-        getFileUrl = f"http://oj.hitwh.edu.cn/api/problem/file/{problem_id}"
+        getFileUrl = f"http://localhost:5070/api/problem/file/{problem_id}"
         fileResult = call_api(getFileUrl, "GET")
         # print(fileResult)
         if not fileResult["success"]:
@@ -448,7 +443,7 @@ def upload_problem(folder_path: str) -> bool:
         subTasks.append(cc)
         # print("!!",subTasks)
 
-        putSubtask = f"http://oj.hitwh.edu.cn/api/problem/{problem_id}/subtask"
+        putSubtask = f"http://localhost:5070/api/problem/{problem_id}/subtask"
 
         subTasksResult = call_api(putSubtask, "PUT", subTasks)
         if not subTasksResult["success"]:
@@ -471,8 +466,8 @@ def batch_upload(parent_folder: str) -> None:
     sum = 0
     # limit1 = 558
     # limit2 = 551
-    limit1=2693
-    limit2=2800
+    limit1=10
+    limit2=120
 
     # ========== 核心修改：获取文件夹列表并按数字排序 ==========
     # 1. 筛选出所有子文件夹
@@ -512,5 +507,5 @@ def batch_upload(parent_folder: str) -> None:
 if __name__ == "__main__":
     # 禁用requests的SSL警告（因为使用了verify=False）
     requests.packages.urllib3.disable_warnings()
-    parent_dir = "E:\project\loj-download-master\downloads\loj.ac"
+    parent_dir = "../loj-download/downloads/loj.ac"
     batch_upload(parent_dir)
